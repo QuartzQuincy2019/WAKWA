@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAKWA 加密器 - 汉字密文</title>
+  <!-- 依赖映射表 -->
+  <script src="doublecode.js"></script>
+  <script src="triplecode.js"></script>
+  <!-- 加密核心 -->
+  <script src="encryptE.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 900px;
+      /* 电脑上更宽 */
+      padding: 40px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 6px;
+      color: #1e293b;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 0.95em;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1e293b;
+      font-size: 0.95em;
+    }
+
+    textarea,
+    input[type="password"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: all 0.2s;
+      background: #fafbfc;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 24px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .radio-group label {
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #3b82f6;
+      border: 1px solid #bae6fd;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-copy {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+
+    .btn-copy:hover {
+      background: #d1fae5;
+    }
+
+    .output-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      min-height: 70px;
+      word-break: break-all;
+      font-size: 1.05em;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .msg {
+      font-size: 0.9em;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .msg.error {
+      color: #dc2626;
+    }
+
+    .msg.success {
+      color: #16a34a;
+    }
+
+    .footer {
+      margin-top: 36px;
+      text-align: center;
+      font-size: 0.85em;
+      color: #94a3b8;
+    }
+
+    details {
+      margin-top: 10px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #3b82f6;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    details p {
+      margin-top: 8px;
+    }
+
+    a {
+      color: #099dad;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:visited {
+      color: #099dad;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 24px;
+        border-radius: 14px;
+      }
+
+      h1 {
+        font-size: 1.6em;
+      }
+
+      .btn-row {
+        gap: 10px;
+      }
+
+      button {
+        padding: 10px 18px;
+        font-size: 0.95em;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔐 WAKWA 加密器</h1>
+    <div>点击前往 <a href="./demonstrator.html" target="_blank">加密步骤演示界面</a></div>
+    <div class="subtitle">基于汉字映射的强对称加密 · 支持密码或十六进制密钥</div>
+
+    <!-- 密钥输入 -->
+    <div class="section">
+      <label>🔑 密钥 / 密码</label>
+      <input type="text" id="keyInput" placeholder="输入密码短语 或 64位十六进制主密钥" autocomplete="off">
+      <details>
+        <summary>使用说明</summary>
+        <p style="font-size:0.85em;color:#555;">
+          <b>密码模式：</b>输入任意字符串，加密前会自动用 PBKDF2 生成主密钥（需记住密码）。<br>
+          <b>主密钥模式：</b>直接输入 64 个十六进制字符（如 <code>a1b2…</code>），解密时需提供相同密钥。<br>
+          解密时，需要加密时输出的 <b>Salt</b>（十六进制字符串），系统会将其与密文一起打包。
+        </p>
+      </details>
+    </div>
+
+    <!-- 配置选项 -->
+    <div class="section">
+      <label>⚙️ 映射模式</label>
+      <div class="radio-group">
+        <label><input type="radio" name="mode" value="TM" checked> TM 15625 三码映射</label>
+        <label><input type="radio" name="mode" value="DM"> DM 625 二码映射（密文易读）</label>
+      </div>
+      <div style="margin-top:8px;">
+        <label><input type="checkbox" id="compactCheck" checked> 紧凑模式（省略 KGM 步骤插入，密文最短）</label>
+      </div>
+    </div>
+
+    <!-- 明文输入 -->
+    <div class="section">
+      <label>📝 明文 / 密文</label>
+      <textarea id="textInput" placeholder="在此输入要加密的文本，或粘贴密文汉字……"></textarea>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="btn-row">
+      <button class="btn-primary" id="encryptBtn">🔒 加密</button>
+      <button class="btn-primary" id="decryptBtn">🔓 解密</button>
+      <button class="btn-copy" id="copyBtn">📋 复制结果</button>
+      <button class="btn-secondary" id="clearBtn">🗑 清空</button>
+    </div>
+
+    <!-- 输出区域 -->
+    <div class="section" style="margin-top: 16px;">
+      <label>📤 输出 / 信息</label>
+      <div class="output-box" id="outputBox">等待操作…</div>
+      <div class="msg" id="msgBox"></div>
+    </div>
+
+    <!-- 打包数据（用于导出完整密文包） -->
+    <div class="section" style="display:none;" id="packedSection">
+      <label>📦 完整密文包 (JSON) <span style="font-weight:normal;color:#888;">解密时需完整提供此 JSON</span></label>
+      <textarea id="packedOutput" readonly style="font-size:0.85em; min-height:80px;"></textarea>
+    </div>
+
+    <div class="footer">WAKWA 加密器 v6 · 所有运算均在浏览器本地完成</div>
+  </div>
+
+  <script>
+    (function () {
+      // DOM 元素
+      const keyInput = document.getElementById('keyInput');
+      const textInput = document.getElementById('textInput');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const decryptBtn = document.getElementById('decryptBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const outputBox = document.getElementById('outputBox');
+      const msgBox = document.getElementById('msgBox');
+      const compactCheck = document.getElementById('compactCheck');
+      const modeRadios = document.getElementsByName('mode');
+      const packedSection = document.getElementById('packedSection');
+      const packedOutput = document.getElementById('packedOutput');
+
+      // 获取当前模式
+      function getMode() {
+        for (const radio of modeRadios) {
+          if (radio.checked) return radio.value;
+        }
+        return 'TM';
+      }
+
+      // 显示消息
+      function showMessage(text, isError = false) {
+        msgBox.textContent = text;
+        msgBox.className = 'msg ' + (isError ? 'error' : 'success');
+        if (isError) {
+          outputBox.textContent = '错误';
+        }
+      }
+
+      // 清空消息
+      function clearMessage() {
+        msgBox.textContent = '';
+        msgBox.className = 'msg';
+      }
+
+      // 设置输出
+      function setOutput(text, packed = null) {
+        outputBox.textContent = text;
+        if (packed) {
+          packedSection.style.display = 'block';
+          packedOutput.value = packed;
+        } else {
+          packedSection.style.display = 'none';
+          packedOutput.value = '';
+        }
+      }
+
+      // 判断输入是否为 64 位十六进制字符串（主密钥模式）
+      function isHexKey(str) {
+        return /^[0-9a-fA-F]{64}$/.test(str.trim());
+      }
+
+      // 执行加密
+      encryptBtn.addEventListener('click', async () => {
+        clearMessage();
+        const key = keyInput.value.trim();
+        const text = textInput.value;
+        if (!key) { showMessage('请输入密钥或密码', true); return; }
+        if (!text) { showMessage('请输入要加密的文本', true); return; }
+
+        const mode = getMode();
+        const compact = compactCheck.checked;
+
+        try {
+          let result;
+          let packedInfo = null;
+          if (isHexKey(key)) {
+            // 主密钥模式
+            result = await encryptE(text, key, { mode, compact });
+            // 打包所需参数（salt 为 hex）
+            packedInfo = JSON.stringify({
+              mode,
+              compact,
+              salt: result.salt,
+              ciphertext: result.ciphertext
+            }, null, 2);
+          } else {
+            // 密码模式
+            const packed = await easyEncryptE(text, key, mode, compact);
+            // packed 已包含 pwdSalt, innerSalt, ciphertext, mode, compact
+            packedInfo = JSON.stringify(packed, null, 2);
+            result = { ciphertext: packed.ciphertext };
+          }
+          setOutput(result.ciphertext, packedInfo);
+          showMessage('加密成功 ✓');
+        } catch (e) {
+          showMessage('加密失败: ' + e.message, true);
+        }
+      });
+
+      // 执行解密
+      decryptBtn.addEventListener('click', async () => {
+        clearMessage();
+        const key = keyInput.value.trim();
+        const text = textInput.value.trim();
+        if (!key) { showMessage('请输入密钥或密码', true); return; }
+        if (!text) { showMessage('请输入密文', true); return; }
+
+        const mode = getMode();
+        const compact = compactCheck.checked;
+
+        try {
+          let plaintext;
+          if (isHexKey(key)) {
+            // 主密钥模式解密：需要提供 salt，但 salt 未在 UI 中单独输入。
+            // 提示用户粘贴完整的打包 JSON 或手动输入 salt。
+            const packedMatch = text.match(/^\{.+\}$/s);
+            if (packedMatch) {
+              try {
+                const packed = JSON.parse(packedMatch[0]);
+                if (packed.salt && packed.ciphertext) {
+                  // 可能是主密钥模式的打包
+                  if (packed.mode !== mode || packed.compact !== compact) {
+                    showMessage('打包中的模式与当前设置不一致，请检查', true);
+                    return;
+                  }
+                  plaintext = await decryptE(packed.ciphertext, key, packed.salt, { mode: packed.mode, compact: packed.compact });
+                } else if (packed.innerSalt && packed.pwdSalt && packed.ciphertext) {
+                  // 密码模式打包
+                  plaintext = await easyDecryptE(packed, key);
+                } else {
+                  showMessage('无法识别的 JSON 密文包格式', true);
+                  return;
+                }
+              } catch (jsonErr) {
+                showMessage('JSON 解析失败: ' + jsonErr.message, true);
+                return;
+              }
+            } else {
+              // 假设用户直接粘贴了密文，并手动提供了 salt？
+              const salt = prompt('请输入加密时返回的 Salt (32位十六进制):');
+              if (!salt || salt.length !== 32) {
+                showMessage('Salt 格式错误或未提供', true);
+                return;
+              }
+              plaintext = await decryptE(text, key, salt, { mode, compact });
+            }
+          } else {
+            // 密码模式：需要完整的 packed 对象
+            if (!text.startsWith('{')) {
+              showMessage('密码模式解密需粘贴完整的密文包 (JSON)', true);
+              return;
+            }
+            try {
+              const packed = JSON.parse(text);
+              if (!packed.pwdSalt || !packed.innerSalt || !packed.ciphertext) {
+                showMessage('JSON 缺少必要字段 (pwdSalt, innerSalt, ciphertext)', true);
+                return;
+              }
+              plaintext = await easyDecryptE(packed, key);
+            } catch (e) {
+              showMessage('JSON 解析失败: ' + e.message, true);
+              return;
+            }
+          }
+          setOutput(plaintext);
+          showMessage('解密成功 ✓');
+        } catch (e) {
+          showMessage('解密失败: ' + e.message, true);
+        }
+      });
+
+      // 复制结果
+      copyBtn.addEventListener('click', () => {
+        const text = outputBox.textContent;
+        if (!text || text === '等待操作…' || text === '错误') {
+          showMessage('没有可复制的结果', true);
+          return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+          showMessage('已复制到剪贴板 ✓');
+        }).catch(() => {
+          showMessage('复制失败，请手动复制', true);
+        });
+      });
+
+      // 清空
+      clearBtn.addEventListener('click', () => {
+        keyInput.value = '';
+        textInput.value = '';
+        outputBox.textContent = '等待操作…';
+        msgBox.textContent = '';
+        packedSection.style.display = 'none';
+        packedOutput.value = '';
+        compactCheck.checked = true;
+        document.querySelector('input[value="TM"]').checked = true;
+      });
+    })();
+  </script>
+</body>
+
+</html>
