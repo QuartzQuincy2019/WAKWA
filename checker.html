@@ -20,6 +20,7 @@
       max-width: 1200px;
       margin: 20px auto;
       padding: 0 10px;
+      width: 100%;
     }
     .mode-section {
       background: white;
@@ -29,7 +30,8 @@
       margin-bottom: 30px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      max-width: 100%;
+      width: 100%;
+      display: block;
     }
     .section-title {
       font-size: 1.4em;
@@ -81,7 +83,7 @@
     }
     .mapping-table {
       border-collapse: collapse;
-      margin: 0 auto;
+      margin: 0;
       font-size: 0.85rem;
       width: max-content;
     }
@@ -92,34 +94,42 @@
       white-space: nowrap;
       min-width: 2.2em;
     }
-    .highlight-fixed {
-      background: #fecaca; /* 浅红色 */
+    /* 高亮类：使用 td. 选择器提升优先级 */
+    td.highlight-fixed {
+      background: #fecaca !important; /* 浅红色 */
     }
-    .highlight-special {
-      background: #bfdbfe; /* 浅蓝色 */
+    td.highlight-special {
+      background: #bfdbfe !important; /* 浅蓝色 */
     }
-    .highlight-dm {
-      background: #fde047; /* 黄色 */
+    td.highlight-dm {
+      background: #fde047 !important; /* 黄色 */
     }
     .dm-full-table td:first-child,
     .dm-full-table th:first-child {
       font-weight: 600;
       background: #f1f5f9;
     }
-    .long-table {
+
+    /* 5×10 紧凑表格，用于 TM 2字母 / DM 1字母 */
+    .mapping-grid {
       border-collapse: collapse;
-      margin: 0 auto;
-      font-size: 1rem;
+      margin: 0;
+      font-size: 0.85rem;
+      width: max-content;
     }
-    .long-table td {
+    .mapping-grid td {
       border: 1px solid #cbd5e1;
-      padding: 6px 12px;
+      padding: 4px 6px;
       text-align: center;
+      white-space: nowrap;
+      min-width: 2.5em;
+      font-weight: normal !important;
+      /* 不再设置 background，让高亮类生效 */
     }
-    .long-table tr:first-child td {
-      font-weight: 600;
-      background: #f1f5f9;
+    .mapping-grid tr:first-child td {
+      font-weight: normal !important;
     }
+
     .second-hanzi-list {
       display: flex;
       flex-wrap: wrap;
@@ -132,9 +142,13 @@
       padding: 4px 10px;
       border-radius: 6px;
     }
+
     @media (max-width: 640px) {
       .mode-section {
         padding: 15px 10px;
+        margin-left: -10px;
+        margin-right: -10px;
+        width: calc(100% + 20px);
       }
       .section-title {
         font-size: 1.2em;
@@ -149,17 +163,17 @@
       .mapping-table td, .mapping-table th {
         padding: 2px 4px;
       }
+      .mapping-grid {
+        font-size: 0.7rem;
+      }
+      .mapping-grid td {
+        padding: 2px 4px;
+      }
       .big-center {
         font-size: 1.8rem;
       }
       .error-msg {
         font-size: 1.4rem;
-      }
-      .long-table {
-        font-size: 0.9rem;
-      }
-      .long-table td {
-        padding: 4px 8px;
       }
     }
   </style>
@@ -189,19 +203,17 @@
     // 映射数据
     const TRIPLE = TRIPLE_CODES;
     const DOUBLE = DOUBLE_CODES;
-    const FIXED = FIXED_TRIPLE_CODE;        // 固定去重三码
-    const SPECIAL = SPECIAL_ALLOCATION;     // 降位三码
+    const FIXED = FIXED_TRIPLE_CODE;
+    const SPECIAL = SPECIAL_ALLOCATION;
 
-    // 构建集合，用于快速查找高亮
     const fixedValues = new Set(Object.values(FIXED));
     const specialValues = new Set(Object.values(SPECIAL));
-    // 三码到颜色的映射（用于输入三码或汉字时高亮对应的三码字符串）
+
     function getTripleHighlightClass(code) {
       if (FIXED[code]) return 'highlight-fixed';
       if (SPECIAL[code]) return 'highlight-special';
       return '';
     }
-    // 汉字值到高亮类
     function getValHighlightClass(val) {
       if (fixedValues.has(val)) return 'highlight-fixed';
       if (specialValues.has(val)) return 'highlight-special';
@@ -212,9 +224,7 @@
     const tmCharToCode = new Map();
     const tmCodeToVal = new Map(Object.entries(TRIPLE));
     for (const [code, val] of tmCodeToVal) {
-      if (val.length === 1) {
-        tmCharToCode.set(val, code);
-      }
+      if (val.length === 1) tmCharToCode.set(val, code);
     }
     const tmDoubleFirstToSeconds = new Map();
     const tmDoubleFullToCode = new Map();
@@ -222,23 +232,16 @@
       if (val.length === 2) {
         const first = val[0];
         const second = val[1];
-        if (!tmDoubleFirstToSeconds.has(first)) {
-          tmDoubleFirstToSeconds.set(first, []);
-        }
+        if (!tmDoubleFirstToSeconds.has(first)) tmDoubleFirstToSeconds.set(first, []);
         tmDoubleFirstToSeconds.get(first).push(second);
         tmDoubleFullToCode.set(val, code);
       }
     }
 
     const dmCharToCode = new Map();
-    for (const [code, val] of Object.entries(DOUBLE)) {
-      dmCharToCode.set(val, code);
-    }
+    for (const [code, val] of Object.entries(DOUBLE)) dmCharToCode.set(val, code);
 
-    // 特别分配双码（DM 黄色高亮）
-    const specialDMCodes = new Set([
-      'ci', 'cj', 'cl', 'co', 'cp', 'cr', 'cu', 'hb', 'li', 'mv', 'pc', 'up'
-    ]);
+    const specialDMCodes = new Set(['ci','cj','cl','co','cp','cr','cu','hb','li','mv','pc','up']);
 
     const tmInput = document.getElementById('tmInput');
     const dmInput = document.getElementById('dmInput');
@@ -286,9 +289,7 @@
           tmStats.innerHTML = `单汉字: ${singleCount}<br>双汉字: ${doubleCount}<br>双汉字比例: ${ratio.toFixed(2)}%`;
 
           let html = '<table class="mapping-table"><thead><tr><th></th>';
-          for (let c = 0; c < 25; c++) {
-            html += `<th>${String.fromCharCode(97 + c)}</th>`;
-          }
+          for (let c = 0; c < 25; c++) html += `<th>${String.fromCharCode(97 + c)}</th>`;
           html += '</tr></thead><tbody>';
           for (let row = 0; row < 25; row++) {
             const rowChar = String.fromCharCode(97 + row);
@@ -316,13 +317,20 @@
           const ratio = doubleCount / (singleCount + doubleCount) * 100;
           tmStats.innerHTML = `单汉字: ${singleCount}<br>双汉字: ${doubleCount}<br>双汉字比例: ${ratio.toFixed(2)}%`;
 
-          let html = '<table class="long-table">';
-          for (let c = 0; c < 25; c++) {
-            const thirdChar = String.fromCharCode(97 + c);
-            const code = prefix + thirdChar;
-            const val = TRIPLE[code] || '';
-            const highlightClass = getValHighlightClass(val);
-            html += `<tr><td class="${highlightClass}">${code}</td><td class="${highlightClass}">${val}</td></tr>`;
+          const letters = 'abcdefghijklmnopqrstuvwxy';
+          let html = '<table class="mapping-grid">';
+          for (let row = 0; row < 5; row++) {
+            html += '<tr>';
+            for (let col = 0; col < 5; col++) {
+              const idx = row * 5 + col;
+              const third = letters[idx];
+              const code = prefix + third;
+              const val = TRIPLE[code] || '';
+              const highlightClass = getValHighlightClass(val);
+              html += `<td class="${highlightClass}">${code}</td>`;
+              html += `<td class="${highlightClass}">${val}</td>`;
+            }
+            html += '</tr>';
           }
           html += '</table>';
           tmDisplay.innerHTML = html;
@@ -377,13 +385,20 @@
       if (isLetters(raw)) {
         if (raw.length === 1) {
           const prefix = raw;
-          let html = '<table class="long-table">';
-          for (let i = 0; i < 25; i++) {
-            const second = String.fromCharCode(97 + i);
-            const code = prefix + second;
-            const val = DOUBLE[code] || '';
-            const highlightClass = specialDMCodes.has(code) ? 'highlight-dm' : '';
-            html += `<tr><td class="${highlightClass}">${code}</td><td class="${highlightClass}">${val}</td></tr>`;
+          const letters = 'abcdefghijklmnopqrstuvwxy';
+          let html = '<table class="mapping-grid">';
+          for (let row = 0; row < 5; row++) {
+            html += '<tr>';
+            for (let col = 0; col < 5; col++) {
+              const idx = row * 5 + col;
+              const second = letters[idx];
+              const code = prefix + second;
+              const val = DOUBLE[code] || '';
+              const highlightClass = specialDMCodes.has(code) ? 'highlight-dm' : '';
+              html += `<td class="${highlightClass}">${code}</td>`;
+              html += `<td class="${highlightClass}">${val}</td>`;
+            }
+            html += '</tr>';
           }
           html += '</table>';
           dmDisplay.innerHTML = html;
@@ -413,9 +428,7 @@
 
     function renderFullDMTable() {
       let html = '<table class="mapping-table dm-full-table"><thead><tr><th></th>';
-      for (let c = 0; c < 25; c++) {
-        html += `<th>${String.fromCharCode(97 + c)}</th>`;
-      }
+      for (let c = 0; c < 25; c++) html += `<th>${String.fromCharCode(97 + c)}</th>`;
       html += '</tr></thead><tbody>';
       for (let r = 0; r < 25; r++) {
         const rowChar = String.fromCharCode(97 + r);
@@ -435,7 +448,6 @@
 
     tmInput.addEventListener('input', updateTMDisplay);
     dmInput.addEventListener('input', updateDMDisplay);
-
     updateTMDisplay();
     updateDMDisplay();
   })();
