@@ -5,43 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WAKWA 加密器 · 步骤演示</title>
+  <link rel="stylesheet" href="general.css">
   <script src="doublecode.js"></script>
   <script src="triplecode.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #f0f2f5;
-      color: #1e293b;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 30px 20px;
-    }
-
-    .main {
-      width: 100%;
+    /* 演示页特有样式 */
+    .container {
       max-width: 1300px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-      padding: 36px 40px;
-    }
-
-    h1 {
-      font-size: 2em;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #64748b;
-      margin-bottom: 24px;
     }
 
     .config-row {
@@ -53,41 +23,6 @@
 
     .config-item {
       flex: 1 1 200px;
-    }
-
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    input[type="password"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      background: #fafbfc;
-      transition: 0.2s;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-    }
-
-    .mode-radio,
-    .checkbox-option {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      margin-top: 6px;
     }
 
     .section-title {
@@ -104,8 +39,7 @@
       border: 1px solid #e2e8f0;
       border-radius: 8px;
       overflow: hidden;
-      font-size: 1.2em;
-      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.9em;
     }
 
     .param-table td {
@@ -135,7 +69,7 @@
       width: 150px;
     }
 
-    /* 步骤表格容器 */
+    /* 步骤表格 */
     #demonstrator {
       overflow-x: auto;
       border: 1px solid #e2e8f0;
@@ -184,8 +118,9 @@
 </head>
 
 <body>
-  <div class="main">
+  <div class="container">
     <h1>🔍 WAKWA 加密器 · 步骤演示</h1>
+    <div>返回 <a class="redirect-link" href="./98.html" target="_self">主界面</a></div>
     <div class="subtitle">盐仅在密码变更时刷新，便于对比中间值</div>
 
     <div class="config-row">
@@ -199,7 +134,7 @@
       </div>
       <div class="config-item" style="flex:0 0 auto;">
         <label>映射模式</label>
-        <div class="mode-radio">
+        <div class="radio-group">
           <label><input type="radio" name="demoMode" value="TM" checked> TM (三码)</label>
           <label><input type="radio" name="demoMode" value="DM"> DM (二码)</label>
         </div>
@@ -264,7 +199,7 @@
     <div class="section-title">📊 加密过程</div>
     <div class="font-size-control">
       <span>字体大小:</span>
-      <input type="range" id="fontSizeSlider" min="12" max="40" value="18" step="2">
+      <input type="range" id="fontSizeSlider" min="8" max="40" value="18" step="2">
       <span id="fontSizeValue">18px</span>
     </div>
     <div id="demonstrator">

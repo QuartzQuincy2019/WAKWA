@@ -1,0 +1,212 @@
+/* general.css – WAKWA 加密器通用样式 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #1e293b;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.container {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 900px;
+  padding: 40px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 2em;
+  margin-bottom: 6px;
+  color: #1e293b;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-bottom: 30px;
+  font-size: 0.95em;
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1e293b;
+  font-size: 0.95em;
+}
+
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fafbfc;
+  transition: all 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: white;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.radio-group,
+.checkbox-option {
+  display: flex;
+  gap: 24px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+
+.radio-group label,
+.checkbox-option label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+button {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #3b82f6;
+  border: 1px solid #bae6fd;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.btn-copy {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.btn-copy:hover {
+  background: #d1fae5;
+}
+
+.output-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  min-height: 70px;
+  word-break: break-all;
+  font-size: 1.05em;
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+.msg {
+  font-size: 0.9em;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.msg.error {
+  color: #dc2626;
+}
+
+.msg.success {
+  color: #16a34a;
+}
+
+.footer {
+  margin-top: 36px;
+  text-align: center;
+  font-size: 0.85em;
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 24px;
+    border-radius: 14px;
+  }
+
+  h1 {
+    font-size: 1.6em;
+  }
+
+  .btn-row {
+    gap: 10px;
+  }
+
+  button {
+    padding: 10px 18px;
+    font-size: 0.95em;
+  }
+}
+
+a.redirect-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+a.redirect-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}

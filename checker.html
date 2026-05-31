@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAKWA 映射查询</title>
+  <link rel="stylesheet" href="general.css">
+  <script src="doublecode.js"></script>
+  <script src="triplecode.js"></script>
+  <script src="allocationinfo.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+    }
+    .checker-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 10px;
+    }
+    .mode-section {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 20px 15px;
+      margin-bottom: 30px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+    }
+    .section-title {
+      font-size: 1.4em;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #1e293b;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+      text-align: center;
+    }
+    .query-input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 14px;
+      font-size: 1.1rem;
+      text-align: center;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+      transition: 0.2s;
+      display: block;
+      margin: 0 auto 15px;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+    .query-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+    .big-center {
+      font-size: 2.2rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+      color: #0f172a;
+      word-break: break-all;
+    }
+    .error-msg {
+      color: #dc2626;
+      font-weight: bold;
+      font-size: 1.6rem;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .stats {
+      text-align: center;
+      font-size: 1rem;
+      margin: 10px 0 20px;
+      line-height: 1.8;
+    }
+    .mapping-table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      font-size: 0.85rem;
+      width: max-content;
+    }
+    .mapping-table td, .mapping-table th {
+      border: 1px solid #cbd5e1;
+      padding: 4px 6px;
+      text-align: center;
+      white-space: nowrap;
+      min-width: 2.2em;
+    }
+    .highlight-fixed {
+      background: #fecaca; /* 浅红色 */
+    }
+    .highlight-special {
+      background: #bfdbfe; /* 浅蓝色 */
+    }
+    .highlight-dm {
+      background: #fde047; /* 黄色 */
+    }
+    .dm-full-table td:first-child,
+    .dm-full-table th:first-child {
+      font-weight: 600;
+      background: #f1f5f9;
+    }
+    .long-table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      font-size: 1rem;
+    }
+    .long-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 12px;
+      text-align: center;
+    }
+    .long-table tr:first-child td {
+      font-weight: 600;
+      background: #f1f5f9;
+    }
+    .second-hanzi-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .second-hanzi-list span {
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    @media (max-width: 640px) {
+      .mode-section {
+        padding: 15px 10px;
+      }
+      .section-title {
+        font-size: 1.2em;
+      }
+      .query-input {
+        font-size: 1rem;
+        padding: 8px 12px;
+      }
+      .mapping-table {
+        font-size: 0.7rem;
+      }
+      .mapping-table td, .mapping-table th {
+        padding: 2px 4px;
+      }
+      .big-center {
+        font-size: 1.8rem;
+      }
+      .error-msg {
+        font-size: 1.4rem;
+      }
+      .long-table {
+        font-size: 0.9rem;
+      }
+      .long-table td {
+        padding: 4px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="checker-container">
+  <!-- TM 查询 -->
+  <div class="mode-section">
+    <div class="section-title">📘 三码映射 (TM) 查询</div>
+    <div>返回 <a class="redirect-link" href="./98.html" target="_self">主界面</a></div>
+    <input type="text" class="query-input" id="tmInput" placeholder="输入字母(a~y) 或 汉字" autocomplete="off">
+    <div id="tmStats" class="stats"></div>
+    <div id="tmDisplay" class="display-area"></div>
+  </div>
+
+  <!-- DM 查询 -->
+  <div class="mode-section">
+    <div class="section-title">📙 二码映射 (DM) 查询</div>
+    <div>返回 <a class="redirect-link" href="./98.html" target="_self">主界面</a></div>
+    <input type="text" class="query-input" id="dmInput" placeholder="输入字母(a~y) 或 汉字" autocomplete="off">
+    <div id="dmDisplay" class="display-area"></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // 映射数据
+    const TRIPLE = TRIPLE_CODES;
+    const DOUBLE = DOUBLE_CODES;
+    const FIXED = FIXED_TRIPLE_CODE;        // 固定去重三码
+    const SPECIAL = SPECIAL_ALLOCATION;     // 降位三码
+
+    // 构建集合，用于快速查找高亮
+    const fixedValues = new Set(Object.values(FIXED));
+    const specialValues = new Set(Object.values(SPECIAL));
+    // 三码到颜色的映射（用于输入三码或汉字时高亮对应的三码字符串）
+    function getTripleHighlightClass(code) {
+      if (FIXED[code]) return 'highlight-fixed';
+      if (SPECIAL[code]) return 'highlight-special';
+      return '';
+    }
+    // 汉字值到高亮类
+    function getValHighlightClass(val) {
+      if (fixedValues.has(val)) return 'highlight-fixed';
+      if (specialValues.has(val)) return 'highlight-special';
+      return '';
+    }
+
+    // 反转映射
+    const tmCharToCode = new Map();
+    const tmCodeToVal = new Map(Object.entries(TRIPLE));
+    for (const [code, val] of tmCodeToVal) {
+      if (val.length === 1) {
+        tmCharToCode.set(val, code);
+      }
+    }
+    const tmDoubleFirstToSeconds = new Map();
+    const tmDoubleFullToCode = new Map();
+    for (const [code, val] of tmCodeToVal) {
+      if (val.length === 2) {
+        const first = val[0];
+        const second = val[1];
+        if (!tmDoubleFirstToSeconds.has(first)) {
+          tmDoubleFirstToSeconds.set(first, []);
+        }
+        tmDoubleFirstToSeconds.get(first).push(second);
+        tmDoubleFullToCode.set(val, code);
+      }
+    }
+
+    const dmCharToCode = new Map();
+    for (const [code, val] of Object.entries(DOUBLE)) {
+      dmCharToCode.set(val, code);
+    }
+
+    // 特别分配双码（DM 黄色高亮）
+    const specialDMCodes = new Set([
+      'ci', 'cj', 'cl', 'co', 'cp', 'cr', 'cu', 'hb', 'li', 'mv', 'pc', 'up'
+    ]);
+
+    const tmInput = document.getElementById('tmInput');
+    const dmInput = document.getElementById('dmInput');
+    const tmStats = document.getElementById('tmStats');
+    const tmDisplay = document.getElementById('tmDisplay');
+    const dmDisplay = document.getElementById('dmDisplay');
+
+    function isLetters(str) { return /^[a-y]+$/.test(str); }
+    function isChinese(str) {
+      return /^[\u4e00-\u9fff\u3400-\u4dbf\u{20000}-\u{2a6df}]+$/u.test(str);
+    }
+
+    const BIG_CLASS = 'big-center';
+    const ERR_CLASS = 'error-msg';
+
+    // ========== TM 处理 ==========
+    function updateTMDisplay() {
+      const raw = tmInput.value.trim().toLowerCase();
+      tmStats.innerHTML = '';
+      tmDisplay.innerHTML = '';
+
+      if (!raw) {
+        const total = Object.keys(TRIPLE).length;
+        let singleCount = 0, doubleCount = 0;
+        for (const val of Object.values(TRIPLE)) {
+          if (val.length === 1) singleCount++;
+          else if (val.length === 2) doubleCount++;
+        }
+        const ratio = doubleCount / (singleCount + doubleCount) * 100;
+        tmStats.innerHTML = `单汉字映射: ${singleCount}<br>双汉字映射: ${doubleCount}<br>双汉字比例: ${ratio.toFixed(2)}%`;
+        return;
+      }
+
+      if (isLetters(raw)) {
+        if (raw.length === 1) {
+          const prefix = raw;
+          let singleCount = 0, doubleCount = 0;
+          for (const [code, val] of tmCodeToVal) {
+            if (code.startsWith(prefix)) {
+              if (val.length === 1) singleCount++;
+              else doubleCount++;
+            }
+          }
+          const ratio = doubleCount / (singleCount + doubleCount) * 100;
+          tmStats.innerHTML = `单汉字: ${singleCount}<br>双汉字: ${doubleCount}<br>双汉字比例: ${ratio.toFixed(2)}%`;
+
+          let html = '<table class="mapping-table"><thead><tr><th></th>';
+          for (let c = 0; c < 25; c++) {
+            html += `<th>${String.fromCharCode(97 + c)}</th>`;
+          }
+          html += '</tr></thead><tbody>';
+          for (let row = 0; row < 25; row++) {
+            const rowChar = String.fromCharCode(97 + row);
+            html += `<tr><th>${prefix}${rowChar}_</th>`;
+            for (let col = 0; col < 25; col++) {
+              const colChar = String.fromCharCode(97 + col);
+              const code = prefix + rowChar + colChar;
+              const val = TRIPLE[code] || '';
+              const highlightClass = getValHighlightClass(val);
+              html += `<td class="${highlightClass}">${val}</td>`;
+            }
+            html += '</tr>';
+          }
+          html += '</tbody></table>';
+          tmDisplay.innerHTML = html;
+        } else if (raw.length === 2) {
+          const prefix = raw;
+          let singleCount = 0, doubleCount = 0;
+          for (const [code, val] of tmCodeToVal) {
+            if (code.startsWith(prefix)) {
+              if (val.length === 1) singleCount++;
+              else doubleCount++;
+            }
+          }
+          const ratio = doubleCount / (singleCount + doubleCount) * 100;
+          tmStats.innerHTML = `单汉字: ${singleCount}<br>双汉字: ${doubleCount}<br>双汉字比例: ${ratio.toFixed(2)}%`;
+
+          let html = '<table class="long-table">';
+          for (let c = 0; c < 25; c++) {
+            const thirdChar = String.fromCharCode(97 + c);
+            const code = prefix + thirdChar;
+            const val = TRIPLE[code] || '';
+            const highlightClass = getValHighlightClass(val);
+            html += `<tr><td class="${highlightClass}">${code}</td><td class="${highlightClass}">${val}</td></tr>`;
+          }
+          html += '</table>';
+          tmDisplay.innerHTML = html;
+        } else if (raw.length === 3) {
+          const val = TRIPLE[raw];
+          if (val) {
+            const highlightClass = getValHighlightClass(val);
+            tmDisplay.innerHTML = `<div class="${BIG_CLASS} ${highlightClass}">${val}</div>`;
+          } else {
+            tmDisplay.innerHTML = `<div class="${ERR_CLASS}">码位不存在</div>`;
+          }
+        }
+      } else if (isChinese(raw)) {
+        if (raw.length === 1) {
+          const hanzi = raw;
+          const code = tmCharToCode.get(hanzi);
+          if (code) {
+            const highlightClass = getTripleHighlightClass(code);
+            tmDisplay.innerHTML = `<div class="${BIG_CLASS} ${highlightClass}">${code}</div>`;
+            return;
+          }
+          const seconds = tmDoubleFirstToSeconds.get(hanzi);
+          if (seconds && seconds.length > 0) {
+            const uniqueSeconds = [...new Set(seconds)];
+            tmStats.innerHTML = `以“${hanzi}”开头的双汉字映射数量: ${uniqueSeconds.length}`;
+            tmDisplay.innerHTML = `<div class="second-hanzi-list">${uniqueSeconds.map(s => `<span>${s}</span>`).join('')}</div>`;
+            return;
+          }
+          tmDisplay.innerHTML = `<div class="${ERR_CLASS}">码位不存在</div>`;
+        } else if (raw.length === 2) {
+          const code = tmDoubleFullToCode.get(raw);
+          if (code) {
+            const highlightClass = getTripleHighlightClass(code);
+            tmDisplay.innerHTML = `<div class="${BIG_CLASS} ${highlightClass}">${code}</div>`;
+          } else {
+            tmDisplay.innerHTML = `<div class="${ERR_CLASS}">码位不存在</div>`;
+          }
+        }
+      }
+    }
+
+    // ========== DM 处理 ==========
+    function updateDMDisplay() {
+      const raw = dmInput.value.trim().toLowerCase();
+      dmDisplay.innerHTML = '';
+
+      if (!raw) {
+        renderFullDMTable();
+        return;
+      }
+
+      if (isLetters(raw)) {
+        if (raw.length === 1) {
+          const prefix = raw;
+          let html = '<table class="long-table">';
+          for (let i = 0; i < 25; i++) {
+            const second = String.fromCharCode(97 + i);
+            const code = prefix + second;
+            const val = DOUBLE[code] || '';
+            const highlightClass = specialDMCodes.has(code) ? 'highlight-dm' : '';
+            html += `<tr><td class="${highlightClass}">${code}</td><td class="${highlightClass}">${val}</td></tr>`;
+          }
+          html += '</table>';
+          dmDisplay.innerHTML = html;
+        } else if (raw.length === 2) {
+          const val = DOUBLE[raw];
+          if (val) {
+            const highlightClass = specialDMCodes.has(raw) ? 'highlight-dm' : '';
+            dmDisplay.innerHTML = `<div class="${BIG_CLASS} ${highlightClass}">${val}</div>`;
+          } else {
+            dmDisplay.innerHTML = `<div class="${ERR_CLASS}">码位不存在</div>`;
+          }
+        }
+      } else if (isChinese(raw)) {
+        if (raw.length === 1) {
+          const code = dmCharToCode.get(raw);
+          if (code) {
+            const highlightClass = specialDMCodes.has(code) ? 'highlight-dm' : '';
+            dmDisplay.innerHTML = `<div class="${BIG_CLASS} ${highlightClass}">${code}</div>`;
+          } else {
+            dmDisplay.innerHTML = `<div class="${ERR_CLASS}">码位不存在</div>`;
+          }
+        } else {
+          dmDisplay.innerHTML = `<div class="${ERR_CLASS}">请输入单个汉字</div>`;
+        }
+      }
+    }
+
+    function renderFullDMTable() {
+      let html = '<table class="mapping-table dm-full-table"><thead><tr><th></th>';
+      for (let c = 0; c < 25; c++) {
+        html += `<th>${String.fromCharCode(97 + c)}</th>`;
+      }
+      html += '</tr></thead><tbody>';
+      for (let r = 0; r < 25; r++) {
+        const rowChar = String.fromCharCode(97 + r);
+        html += `<tr><th>${rowChar}_</th>`;
+        for (let c = 0; c < 25; c++) {
+          const colChar = String.fromCharCode(97 + c);
+          const code = rowChar + colChar;
+          const val = DOUBLE[code] || '';
+          const highlightClass = specialDMCodes.has(code) ? 'highlight-dm' : '';
+          html += `<td class="${highlightClass}">${val}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      dmDisplay.innerHTML = html;
+    }
+
+    tmInput.addEventListener('input', updateTMDisplay);
+    dmInput.addEventListener('input', updateDMDisplay);
+
+    updateTMDisplay();
+    updateDMDisplay();
+  })();
+</script>
+</body>
+</html>

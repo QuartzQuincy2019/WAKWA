@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WAKWA-lite · 低强度加密</title>
+  <link rel="stylesheet" href="general.css">
+  <!-- 依赖映射表 -->
+  <script src="doublecode.js"></script>
+  <script src="triplecode.js"></script>
+  <!-- 加密核心（完整版） -->
+  <script src="encryptE.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>⚡ WAKWA-lite 低强度加密</h1>
+    <div>返回 <a class="redirect-link" href="./98.html" target="_self">主界面</a></div>
+    <div class="subtitle">同一密钥总是生成相同密文 · 无需记忆盐值</div>
+    <div class="note">
+      ⚠️ 本模式不包含随机盐，相同明文、相同密钥会产生相同密文。仅适用于对安全性要求不高的日常对话，禁止用于高敏感数据。
+    </div>
+
+    <div class="section">
+      <label>🔑 主密钥</label>
+      <input type="text" id="keyInput" placeholder="输入64位十六进制密钥" autocomplete="off">
+      <details>
+        <summary>支持密码吗？</summary>
+        <p style="font-size:0.85em; margin-top:6px;">
+          您也可以输入普通密码，但密码的派生盐将固定为全零，安全性更低。推荐使用随机生成的64位十六进制密钥。
+        </p>
+      </details>
+    </div>
+
+    <div class="section">
+      <label>⚙️ 映射模式</label>
+      <div class="radio-group">
+        <label><input type="radio" name="liteMode" value="TM" checked> TM (三码)</label>
+        <label><input type="radio" name="liteMode" value="DM"> DM (二码)</label>
+      </div>
+      <label style="margin-top:8px;"><input type="checkbox" id="compactCheck" checked> 紧凑模式 (推荐)</label>
+    </div>
+
+    <div class="section">
+      <label>📝 明文 / 密文</label>
+      <textarea id="textInput" placeholder="输入要加密的文本，或粘贴密文汉字"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="encryptBtn">🔒 加密</button>
+      <button class="btn-primary" id="decryptBtn">🔓 解密</button>
+      <button class="btn-secondary" id="clearBtn">🗑 清空</button>
+    </div>
+
+    <div class="section" style="margin-top: 16px;">
+      <label>📤 输出</label>
+      <div class="output-box" id="outputBox">等待操作…</div>
+      <div class="msg" id="msgBox"></div>
+    </div>
+
+    <div class="footer">WAKWA-lite · 所有运算在浏览器本地完成</div>
+  </div>
+
+  <script>
+    (function () {
+      // ---------- 工具函数 ----------
+      function bytesToHex(bytes) {
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      function hexToBytes(hex) {
+        if (hex.length % 2) throw new Error('无效十六进制');
+        return new Uint8Array(hex.length / 2).map((_, i) => parseInt(hex.substr(i * 2, 2), 16));
+      }
+
+      // 由主密钥生成确定性盐 (SHA-256 前 16 字节)
+      async function deriveSaltFromKey(masterKeyBytes) {
+        const hash = await crypto.subtle.digest('SHA-256', masterKeyBytes);
+        return new Uint8Array(hash.slice(0, 16));
+      }
+
+      // 密码 → 主密钥（PBKDF2，固定盐全零，低安全性）
+      async function passwordToKey(password) {
+        const salt = new Uint8Array(16); // 全零盐
+        const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+        const bits = await crypto.subtle.deriveBits(
+          { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+          keyMaterial, 256
+        );
+        return new Uint8Array(bits);
+      }
+
+      // 判断输入是否为 64 位十六进制
+      function isHexKey(str) {
+        return /^[0-9a-fA-F]{64}$/.test(str.trim());
+      }
+
+      // DOM 元素
+      const keyInput = document.getElementById('keyInput');
+      const textInput = document.getElementById('textInput');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const decryptBtn = document.getElementById('decryptBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const outputBox = document.getElementById('outputBox');
+      const msgBox = document.getElementById('msgBox');
+      const compactCheck = document.getElementById('compactCheck');
+      const modeRadios = document.getElementsByName('liteMode');
+
+      function getMode() {
+        for (const r of modeRadios) if (r.checked) return r.value;
+        return 'TM';
+      }
+
+      function showMessage(text, isError = false) {
+        msgBox.textContent = text;
+        msgBox.className = 'msg ' + (isError ? 'error' : 'success');
+        if (isError) outputBox.textContent = '错误';
+      }
+
+      function clearMessage() {
+        msgBox.textContent = '';
+        msgBox.className = 'msg';
+      }
+
+      // 执行加密
+      encryptBtn.addEventListener('click', async () => {
+        clearMessage();
+        const keyInputVal = keyInput.value.trim();
+        const text = textInput.value;
+        if (!keyInputVal) { showMessage('请输入主密钥', true); return; }
+        if (!text) { showMessage('请输入明文', true); return; }
+
+        const mode = getMode();
+        const compact = compactCheck.checked;
+
+        try {
+          // 获取主密钥字节
+          let masterKeyBytes;
+          if (isHexKey(keyInputVal)) {
+            masterKeyBytes = hexToBytes(keyInputVal);
+          } else {
+            // 密码模式，固定盐派生主密钥（低安全性）
+            masterKeyBytes = await passwordToKey(keyInputVal);
+          }
+          // 生成确定性盐
+          const salt = await deriveSaltFromKey(masterKeyBytes);
+          // 调用加密函数（需将主密钥转为 hex 字符串）
+          const masterKeyHex = bytesToHex(masterKeyBytes);
+          const result = await encryptE(text, masterKeyHex, {
+            mode,
+            compact,
+            salt: salt
+          });
+          outputBox.textContent = result.ciphertext;
+          showMessage('加密成功 ✓');
+        } catch (e) {
+          showMessage('加密失败: ' + e.message, true);
+        }
+      });
+
+      // 执行解密
+      decryptBtn.addEventListener('click', async () => {
+        clearMessage();
+        const keyInputVal = keyInput.value.trim();
+        const text = textInput.value.trim();
+        if (!keyInputVal) { showMessage('请输入主密钥', true); return; }
+        if (!text) { showMessage('请输入密文', true); return; }
+
+        const mode = getMode();
+        const compact = compactCheck.checked;
+
+        try {
+          let masterKeyBytes;
+          if (isHexKey(keyInputVal)) {
+            masterKeyBytes = hexToBytes(keyInputVal);
+          } else {
+            masterKeyBytes = await passwordToKey(keyInputVal);
+          }
+          const salt = await deriveSaltFromKey(masterKeyBytes);
+          const masterKeyHex = bytesToHex(masterKeyBytes);
+          const plaintext = await decryptE(text, masterKeyHex, bytesToHex(salt), {
+            mode,
+            compact
+          });
+          outputBox.textContent = plaintext;
+          showMessage('解密成功 ✓');
+        } catch (e) {
+          showMessage('解密失败: ' + e.message, true);
+        }
+      });
+
+      // 清空
+      clearBtn.addEventListener('click', () => {
+        keyInput.value = '';
+        textInput.value = '';
+        outputBox.textContent = '等待操作…';
+        msgBox.textContent = '';
+        compactCheck.checked = true;
+        document.querySelector('input[value="TM"]').checked = true;
+      });
+    })();
+  </script>
+</body>
+
+</html>
