@@ -184,6 +184,8 @@
   <div class="mode-section">
     <div class="section-title">📘 三码映射 (TM) 查询</div>
     <div>返回 <a class="redirect-link" href="./98.html" target="_self">主界面</a></div>
+    <div>TM映射长度为 25^3 = 15625 。</div>
+    <div>双字的映射，代表五笔98中不存在该三码对应的汉字。<br>红色标记的单字，是本程序为去重而硬性规定。<br>浅蓝色标记的单字，是为了适配大多数主流汉字字体支持显示的 U+4E00 ~ U+9FA5 的汉字而硬性规定的。其五笔98不符合对应的码位。</div>
     <input type="text" class="query-input" id="tmInput" placeholder="输入字母(a~y) 或 汉字" autocomplete="off">
     <div id="tmStats" class="stats"></div>
     <div id="tmDisplay" class="display-area"></div>
